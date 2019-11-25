@@ -84,7 +84,8 @@ def get_flow_params(col_num, row_num, additional_net_params):
 
 
 def get_non_flow_params(enter_speed, add_net_params):
-    """Define the network and initial params in the absence of inflows.
+    """
+    Define the network and initial params in the absence of inflows.
 
     Note that when a vehicle leaves a network in this case, it is immediately
     returns to the start of the row/column it was traversing, and in the same
