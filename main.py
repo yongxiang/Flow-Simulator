@@ -1,8 +1,34 @@
 from env.flow_lib import flow_env
+from utils import parser
+from agents.TD3 import TD3
+from agents.PPO import PPO
+from agents.TRPO import TRPO
 
 import numpy as np
+import gym
+import gym.spaces
 
-env, env_name = flow_env(render=True, use_inflows=True)
+import torch
+import torch.optim as optim
+import torch.nn as nn
+
+torch.utils.backcompat.broadcast_warning.enabled = True
+torch.set_default_tensor_type('torch.DoubleTensor')
+
+args = parser.parser()
+print('agent type: {}'.format(args.pg_type))
+env, env_name = flow_env(render=args.render, use_inflows=True)
+
+### seeding ###
+env.seed(args.seed)
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+###############
+
+obs_dim = env.observation_space.shape[0]
+act_dim = env.action_space.shape[0]
+
+
 print("simulated task: {}".format(env_name))
 
 act_dim = env.action_space.shape

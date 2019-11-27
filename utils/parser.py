@@ -26,6 +26,7 @@ def parser():
                         help='possible options: td3, trpo, ppo')
     parser.add_argument('--td3-iter', type=int, default=100)
     parser.add_argument('--entropy-coef', type=float, default=0.001)
+    parser.add_argument('--render', action='store_true')
     args = parser.parse_args()
 
     return args
