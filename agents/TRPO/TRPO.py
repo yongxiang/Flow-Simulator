@@ -5,6 +5,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.autograd import Variable
+from torch.distributions.kl import kl_divergence
 
 from agents.TRPO.trpo import trpo_step
 from agents.TRPO.utils import *
@@ -64,30 +65,29 @@ def update_params(batch, policy_net, value_net, gamma, tau, l2_reg, max_kl, damp
 
     advantages = (advantages - advantages.mean()) / advantages.std()
 
-    action_means, action_log_stds, action_stds = policy_net(Variable(states))
-    fixed_log_prob = normal_log_density(Variable(actions), action_means, action_log_stds, action_stds).data.clone()
+    action_prob = policy_net(Variable(states))
+    fixed_log_prob = normal_log_density(Variable(actions), action_prob).data.clone()
 
     def get_loss(volatile=False):
-        action_means, action_log_stds, action_stds = policy_net(Variable(states, volatile=volatile))
-        log_prob = normal_log_density(Variable(actions), action_means, action_log_stds, action_stds)
+        action_prob = policy_net(Variable(states, volatile=volatile))
+        log_prob = normal_log_density(Variable(actions), action_prob)
         action_loss = -Variable(advantages) * torch.exp(log_prob - Variable(fixed_log_prob))
         return action_loss.mean() + entropy_coef * policy_net.entropy(states)
 
 
     def get_kl():
-        mean1, log_std1, std1 = policy_net(Variable(states))
+        prob1 = policy_net(Variable(states))
 
-        mean0 = Variable(mean1.data)
-        log_std0 = Variable(log_std1.data)
-        std0 = Variable(std1.data)
+        mean0 = Variable(prob1.data)
+        ### need to be fixed
         kl = log_std1 - log_std0 + (std0.pow(2) + (mean0 - mean1).pow(2)) / (2.0 * std1.pow(2)) - 0.5
         return kl.sum(1, keepdim=True)
 
     trpo_step(policy_net, get_loss, get_kl, max_kl, damping)
 
 class TRPO(object):
-    def __init__(self, obs_dim, act_dim, normalizer, std):
-        self.policy_net = StochasticPolicy(obs_dim, act_dim, hidden_dim=200, normalizer=normalizer, std=std)
+    def __init__(self, obs_dim, act_dim, normalizer):
+        self.policy_net = StochasticPolicy(obs_dim, act_dim, hidden_dim=200, normalizer=normalizer)
         self.value_net = Value(obs_dim, hidden_dim=200, normalizer=normalizer)
 
         self.type = 'TRPO'

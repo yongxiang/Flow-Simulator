@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import torch.autograd as autograd
 
+from torch.distributions.bernoulli import Bernoulli
+
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -12,11 +14,9 @@ def normal_entropy(std):
     return entropy.sum(1, keepdim=True)
 
 
-def normal_log_density(x, mean, log_std, std):
-    var = std.pow(2)
-    log_density = -(x - mean).pow(2) / (
-        2 * var) - 0.5 * math.log(2 * math.pi) - log_std
-    return log_density.sum(1, keepdim=True)
+def normal_log_density(x, prob):
+    m = Bernoulli(prob)
+    return m.log_prob(x).sum(1, keepdim=True)
 
 
 def get_flat_params_from(model):
