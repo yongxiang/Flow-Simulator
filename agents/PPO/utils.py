@@ -1,12 +1,11 @@
 import math
 import torch
+from torch.distributions.bernoulli import Bernoulli
 from utils import device
 
-def log_density(x, mu, std, log_std):
-    var = std.pow(2)
-    log_density = (-(x - mu).pow(2) / (2 * var) 
-                    -0.5 * math.log(2 * math.pi) - log_std)
-    return log_density.sum(1, keepdim=True)
+def log_density(actions, prob):
+    m = Bernoulli(prob)
+    return m.log_prob(actions).sum(1, keepdim=True)
 
 
 def gae(batch, value_net, gamma, tau):
