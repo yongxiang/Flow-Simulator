@@ -1,8 +1,11 @@
 from env.flow_lib import flow_env
-from utils import parser
-from agents.TD3 import TD3
-from agents.PPO import PPO
-from agents.TRPO import TRPO
+from utils import parser, log
+from utils.normalizer import Normalizer
+from agents.TD3.TD3 import TD3
+from agents.PPO.PPO import PPO
+from agents.TRPO.TRPO import TRPO
+from utils.rollout import real_batch, evaluate
+from utils import Transition, device
 
 import numpy as np
 import gym
@@ -27,19 +30,24 @@ np.random.seed(args.seed)
 
 obs_dim = env.observation_space.shape[0]
 act_dim = env.action_space.shape[0]
-
-
+tb_writer, label = log.log_writer(args)
+total_steps = 0
+normalizer = Normalizer(obs_dim)
 print("simulated task: {}".format(env_name))
 
-act_dim = env.action_space.shape
+policy = PPO(obs_dim, act_dim, normalizer, args.gamma, args.tau)
 
-for i in range(10):
+for i_episode in range(args.num_episodes):
     state = env.reset()
-    #print(state)
-    for j in range(100000):
-        action = np.ones(act_dim) * 10
-        state, reward, done, _ = env.step(action)
-        print(i, j, reward, action)
-        if done:
-            break
+    
+    ### evaluation
+    reward_mean, reward_std = evaluate(policy.get_actor(), env, batch_size=1000)
+    tb_writer.add_scalar('{}/{}'.format(env_name, 'eval_mean'), reward_mean, total_steps)
+    tb_writer.add_scalar('{}/{}'.format(env_name, 'eval_std'), reward_std, total_steps)
+    print('Episode: {}, Perf: {:.3f}, Std: {:.3f}'.format(i_episode + 1, reward_mean, reward_std))
 
+    ### sampling from environment    
+    batch = real_batch(policy.get_actor(), env, args.batch_size)
+    real_states = torch.Tensor(batch.state).to(device)
+    total_steps += real_states.shape[0]
+    policy.train(batch)

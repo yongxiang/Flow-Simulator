@@ -9,20 +9,25 @@ from utils import device
 
 
 def surrogate_loss(policy_net, advantages, states, old_policy, actions):
-    mean, log_std, std = policy_net(states)
-    new_policy = log_density(actions, mean, std, log_std)
+    prob = policy_net(states)
+    new_policy = log_density(actions, prob)
     ratio = torch.exp(new_policy - old_policy)
     surrogate = ratio * advantages
     return surrogate, ratio
 
 
 class PPO(object):
-    def __init__(self, obs_dim, act_dim, normalizer):
+    def __init__(self, obs_dim, act_dim, normalizer, gamma, tau):
         self.policy_net = StochasticPolicy(obs_dim, act_dim, 300, normalizer).to(device)
         self.value_net = Value(obs_dim, hidden_dim=300, normalizer=normalizer).to(device)
         self.policy_optimizer = optim.Adam(self.policy_net.parameters(), lr=3e-4)
         self.value_optimizer = optim.Adam(self.value_net.parameters(), lr=3e-4)
         self.type = 'PPO'
+        self.gamma = gamma
+        self.tau = tau
+
+    def get_actor(self):
+        return self.policy_net
 
     def to_train(self):
         self.policy_net.train()
@@ -43,12 +48,12 @@ class PPO(object):
     def train(self, batch, entropy_coef=1e-3, n_iter=1, batch_size=1024, clip_param=0.2):
         states = torch.Tensor(batch.state).to(device)
         actions = torch.Tensor(batch.action).to(device)
-        returns, advantages = gae(batch, self.value_net)
+        returns, advantages = gae(batch, self.value_net, self.gamma, self.tau)
 
         #returns = (returns - returns.mean()) / (returns.std() + 1e-8)
 
-        mean, log_std, std = self.policy_net(states)
-        old_policy = log_density(actions, mean, std, log_std).detach()
+        prob = self.policy_net(states)
+        old_policy = log_density(actions, prob).detach()
         old_values = self.value_net(states).detach()
 
         for _ in range(n_iter):

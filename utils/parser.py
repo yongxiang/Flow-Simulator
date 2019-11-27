@@ -4,8 +4,6 @@ def parser():
     parser = argparse.ArgumentParser(description='Traffic Signal Control via Reinforcement Learning')
     parser.add_argument('--gamma', type=float, default=0.995, metavar='G',
                         help='discount factor (default: 0.995)')
-    parser.add_argument('--env', type=str, default="Reacher-v1", metavar='G',
-                        help='name of the environment to run')
     parser.add_argument('--tau', type=float, default=0.97, metavar='G',
                         help='gae (default: 0.97)')
     parser.add_argument('--l2-reg', type=float, default=1e-3, metavar='G',
@@ -22,10 +20,11 @@ def parser():
                         help='number of epochs to train an expert')
     parser.add_argument('--hidden-dim', type=int, default=100, metavar='H',
                         help='dimension of hidden layers of architectures')
-    parser.add_argument('--pg-type', type=str, default='trpo',
+    parser.add_argument('--pg-type', type=str, default='ppo',
                         help='possible options: td3, trpo, ppo')
+    parser.add_argument('--num-episodes', type=int, default=500)
     parser.add_argument('--td3-iter', type=int, default=100)
-    parser.add_argument('--entropy-coef', type=float, default=0.001)
+    parser.add_argument('--ps', type=str, default='')
     parser.add_argument('--render', action='store_true')
     args = parser.parse_args()
 
