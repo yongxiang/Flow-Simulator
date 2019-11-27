@@ -9,7 +9,7 @@ for i in range(10):
     for j in range(100000):
         action = env.action_space.sample()
         state, reward, done, _ = env.step(action)
-        print(i, j)
+        print(i, j, reward, action.shape)
         if done:
             break
 

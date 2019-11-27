@@ -12,7 +12,7 @@ from flow.controllers import SimCarFollowingController, GridRouter
 
 # time horizon of a single rollout
 # too short horizon will cause error
-HORIZON = 5000
+HORIZON = 4000
 
 def gen_edges(col_num, row_num):
     """
