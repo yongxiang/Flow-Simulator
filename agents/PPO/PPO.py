@@ -24,9 +24,6 @@ class PPO(object):
         self.value_optimizer = optim.Adam(self.value_net.parameters(), lr=3e-4)
         self.type = 'PPO'
 
-    def get_actor(self):
-        return self.policy_net
-
     def to_train(self):
         self.policy_net.train()
         self.value_net.train()
