@@ -11,7 +11,8 @@ from flow.core.params import VehicleParams
 from flow.controllers import SimCarFollowingController, GridRouter
 
 # time horizon of a single rollout
-HORIZON = 200
+# too short horizon will cause error
+HORIZON = 5000
 
 def gen_edges(col_num, row_num):
     """
@@ -208,7 +209,12 @@ flow_params = dict(
 )
 
 
-def flow_env(use_inflows=False):
+def flow_env(use_inflows=False, render=True):
+    global flow_params
+    flow_params['sim'] = SumoParams(
+                            sim_step=0.1,
+                            render=render)
+    print(flow_params)
     """
     Parameters
     ----------
