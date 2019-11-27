@@ -12,7 +12,7 @@ from flow.controllers import SimCarFollowingController, GridRouter
 
 # time horizon of a single rollout
 # too short horizon will cause error
-HORIZON = 4000
+HORIZON = 2000
 
 def gen_edges(col_num, row_num):
     """
@@ -73,7 +73,7 @@ def get_flow_params(col_num, row_num, additional_net_params):
         inflow.add(
             veh_type='idm',
             edge=outer_edges[i],
-            probability=0.25,
+            probability=0.15,
             departLane='free',
             departSpeed=10)
 
@@ -185,6 +185,7 @@ flow_params = dict(
     sim=SumoParams(
         sim_step=1,
         render=False,
+        restart_instance=True
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
@@ -213,7 +214,9 @@ def flow_env(use_inflows=False, render=True):
     global flow_params
     flow_params['sim'] = SumoParams(
                             sim_step=0.1,
-                            render=render)
+                            render=render,
+                            restart_instance=True # for long horizon and visualization
+                            )
     print(flow_params)
     """
     Parameters
