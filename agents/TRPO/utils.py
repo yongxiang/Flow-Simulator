@@ -14,7 +14,7 @@ def normal_entropy(std):
     return entropy.sum(1, keepdim=True)
 
 
-def normal_log_density(x, prob):
+def log_density(x, prob):
     m = Bernoulli(prob)
     return m.log_prob(x).sum(1, keepdim=True)
 
