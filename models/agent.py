@@ -67,7 +67,7 @@ class TD3Value(nn.Module):
 
 
 class StochasticPolicy(nn.Module):
-    def __init__(self, num_inputs, num_outputs, hidden_dim, normalizer, std=0.3):
+    def __init__(self, num_inputs, num_outputs, hidden_dim, normalizer):
         super(StochasticPolicy, self).__init__()
         self.affine1 = nn.Linear(num_inputs, hidden_dim)
         self.affine2 = nn.Linear(hidden_dim, hidden_dim)

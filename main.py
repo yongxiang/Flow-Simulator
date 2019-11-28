@@ -28,6 +28,13 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 ###############
 
+def save_policy(steps, actor):
+    filename = '{}_{}'.format(args.pg_type, steps)
+    torch.save({
+                'steps': steps,
+                'model_state_dict': actor.state_dict()
+                }, './model_log/'+filename)
+
 obs_dim = env.observation_space.shape[0]
 act_dim = env.action_space.shape[0]
 tb_writer, label = log.log_writer(args)
@@ -35,11 +42,17 @@ total_steps = 0
 normalizer = Normalizer(obs_dim)
 print("simulated task: {}".format(env_name))
 
-policy = PPO(obs_dim, act_dim, normalizer, args.gamma, args.tau)
+if args.pg_type == 'ppo':
+    policy = PPO(obs_dim, act_dim, normalizer, args.gamma, args.tau)
+elif args.pg_type == 'trpo':
+    policy = TRPO(obs_dim, act_dim, normalizer=normalizer)
+else:
+    assert NotImplementedError
 
 for i_episode in range(args.num_episodes):
     state = env.reset()
-    
+    save_policy(total_steps, policy.get_actor())
+
     ### evaluation
     reward_mean, reward_std = evaluate(policy.get_actor(), env, batch_size=1000)
     tb_writer.add_scalar('{}/{}'.format(env_name, 'eval_mean'), reward_mean, total_steps)

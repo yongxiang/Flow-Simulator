@@ -2,3 +2,4 @@ log/
 __pycache__/
 *.swp
 performance_log/
+model_log/

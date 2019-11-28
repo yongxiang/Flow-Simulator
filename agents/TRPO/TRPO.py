@@ -66,11 +66,11 @@ def update_params(batch, policy_net, value_net, gamma, tau, l2_reg, max_kl, damp
     advantages = (advantages - advantages.mean()) / advantages.std()
 
     action_prob = policy_net(Variable(states))
-    fixed_log_prob = normal_log_density(Variable(actions), action_prob).data.clone()
+    fixed_log_prob = log_density(Variable(actions), action_prob).data.clone()
 
     def get_loss(volatile=False):
         action_prob = policy_net(Variable(states, volatile=volatile))
-        log_prob = normal_log_density(Variable(actions), action_prob)
+        log_prob = log_density(Variable(actions), action_prob)
         action_loss = -Variable(advantages) * torch.exp(log_prob - Variable(fixed_log_prob))
         return action_loss.mean() + entropy_coef * policy_net.entropy(states)
 
@@ -78,9 +78,9 @@ def update_params(batch, policy_net, value_net, gamma, tau, l2_reg, max_kl, damp
     def get_kl():
         prob1 = policy_net(Variable(states))
 
-        mean0 = Variable(prob1.data)
-        ### need to be fixed
-        kl = log_std1 - log_std0 + (std0.pow(2) + (mean0 - mean1).pow(2)) / (2.0 * std1.pow(2)) - 0.5
+        prob0 = Variable(prob1.data)
+        #kl = log_std1 - log_std0 + (std0.pow(2) + (mean0 - mean1).pow(2)) / (2.0 * std1.pow(2)) - 0.5
+        kl = prob0 * (torch.log(prob0) - torch.log(prob1))
         return kl.sum(1, keepdim=True)
 
     trpo_step(policy_net, get_loss, get_kl, max_kl, damping)

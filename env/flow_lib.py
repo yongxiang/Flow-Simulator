@@ -12,7 +12,7 @@ from flow.controllers import SimCarFollowingController, GridRouter
 
 # time horizon of a single rollout
 # too short horizon will cause error
-HORIZON = 2000
+HORIZON = 1500
 
 def gen_edges(col_num, row_num):
     """
@@ -116,9 +116,9 @@ def get_non_flow_params(enter_speed, add_net_params):
 
 
 V_ENTER = 15
-INNER_LENGTH = 300
+INNER_LENGTH = 100
 LONG_LENGTH = 100
-SHORT_LENGTH = 300
+SHORT_LENGTH = 100
 N_ROWS = 3
 N_COLUMNS = 3
 NUM_CARS_LEFT = 1
@@ -142,7 +142,7 @@ grid_array = {
 
 additional_env_params = {
         'target_velocity': 50,
-        'switch_time': 3.0,
+        'switch_time': 3.0, # default 3.0
         'num_observed': 2,
         'discrete': False,
         'tl_type': 'controlled'
