@@ -8,7 +8,7 @@ use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 
 class ReplayBuffer(object):
-    def __init__(self, max_size=1e6, save_reward=True):
+    def __init__(self, max_size=5e4, save_reward=True):
         self.save_reward = save_reward
         self.storage = []
         self.max_size = max_size

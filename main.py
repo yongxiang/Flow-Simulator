@@ -46,6 +46,8 @@ if args.pg_type == 'ppo':
     policy = PPO(obs_dim, act_dim, normalizer, args.gamma, args.tau)
 elif args.pg_type == 'trpo':
     policy = TRPO(obs_dim, act_dim, normalizer=normalizer)
+elif args.pg_type == 'td3':
+    policy = TD3(obs_dim, act_dim, iters=1000, normalizer=normalizer)
 else:
     assert NotImplementedError
 
@@ -63,4 +65,9 @@ for i_episode in range(args.num_episodes):
     batch = real_batch(policy.get_actor(), env, args.batch_size)
     real_states = torch.Tensor(batch.state).to(device)
     total_steps += real_states.shape[0]
-    policy.train(batch)
+    
+    if args.pg_type == 'td3':
+        policy.buffer_add(batch)
+        policy.train()
+    else:
+        policy.train(batch)

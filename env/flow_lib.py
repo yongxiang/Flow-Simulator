@@ -12,7 +12,7 @@ from flow.controllers import SimCarFollowingController, GridRouter
 
 # time horizon of a single rollout
 # too short horizon will cause error
-HORIZON = 1500
+HORIZON = 2000
 
 def gen_edges(col_num, row_num):
     """
@@ -64,6 +64,8 @@ def get_flow_params(col_num, row_num, additional_net_params):
     flow.core.params.NetParams
         network-specific parameters used to generate the network
     """
+    prob = {8: 0.6, 9: 0.3, 6:0.2, 7: 0.3, 10: 0.5, 11:0.15}
+    
     initial = InitialConfig(
         spacing='custom', lanes_distribution=float('inf'), shuffle=True)
 
@@ -73,9 +75,9 @@ def get_flow_params(col_num, row_num, additional_net_params):
         inflow.add(
             veh_type='idm',
             edge=outer_edges[i],
-            probability=0.15,
-            departLane='free',
-            departSpeed=10)
+            probability=prob[i] if i in prob else 0.1,
+            depart_lane='free',
+            depart_speed=10)
 
     net = NetParams(
         inflows=inflow,
@@ -117,7 +119,7 @@ def get_non_flow_params(enter_speed, add_net_params):
 
 V_ENTER = 15
 INNER_LENGTH = 100
-LONG_LENGTH = 100
+LONG_LENGTH = 50
 SHORT_LENGTH = 100
 N_ROWS = 3
 N_COLUMNS = 3
@@ -142,8 +144,8 @@ grid_array = {
 
 additional_env_params = {
         'target_velocity': 50,
-        'switch_time': 3.0, # default 3.0
-        'num_observed': 2,
+        'switch_time': 3.0,
+        'num_observed': 3,
         'discrete': False,
         'tl_type': 'controlled'
     }
@@ -185,7 +187,7 @@ flow_params = dict(
     sim=SumoParams(
         sim_step=1,
         render=False,
-        restart_instance=True
+        restart_instance=False
     ),
 
     # environment related parameters (see flow.core.params.EnvParams)
