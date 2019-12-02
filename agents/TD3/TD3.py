@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions.bernoulli import Bernoulli
 
 from models.agent import Policy, TD3Value
 from agents.TD3.replay_buffer import ReplayBuffer
@@ -11,7 +12,7 @@ from utils import device
 # Paper: https://arxiv.org/abs/1802.09477
 
 class TD3(object):
-    def __init__(self, state_dim, action_dim, max_action, iters, normalizer=None, lr=1e-3):
+    def __init__(self, state_dim, action_dim, iters, normalizer=None, lr=1e-3):
         self.actor = Policy(state_dim, action_dim, hidden_dim=400, normalizer=normalizer).to(device)
         self.actor_target = Policy(state_dim, action_dim, hidden_dim=400, normalizer=normalizer).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
@@ -22,7 +23,6 @@ class TD3(object):
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
-        self.max_action = max_action
         self.replay_buffer = ReplayBuffer()
         self.iters = iters
 
@@ -46,18 +46,15 @@ class TD3(object):
     def select_action(self, state):
         #state = torch.FloatTensor(state.reshape(1, -1)).to(device)
         #return self.actor(state).cpu().data.numpy().flatten()
-        return self.actor(state).cpu().data.numpy()
+        return self.actor(state).cpu().data.numpy() > 0.5
 
 
-    def train(self, batch_size=100, discount=0.99, tau=0.005, policy_noise=0.2, noise_clip=0.5, policy_freq=2, reward_function=None):
+    def train(self, batch_size=100, discount=0.99, tau=0.005, policy_freq=2):
 
         for it in range(self.iters):
 
             # Sample replay buffer
-            if reward_function is not None:
-                x, y, u, r, d = self.replay_buffer.sample(batch_size, reward_function)
-            else:
-                x, y, u, r, d = self.replay_buffer.sample(batch_size)
+            x, y, u, r, d = self.replay_buffer.sample(batch_size)
             state = torch.DoubleTensor(x).to(device)
             action = torch.DoubleTensor(u).to(device)
             next_state = torch.DoubleTensor(y).to(device)
@@ -65,9 +62,10 @@ class TD3(object):
             reward = torch.DoubleTensor(r).to(device)
 
             # Select action according to policy and add clipped noise 
-            noise = torch.DoubleTensor(u).data.normal_(0, policy_noise).to(device)
-            noise = noise.clamp(-noise_clip, noise_clip)
-            next_action = (self.actor_target(next_state) + noise).clamp(-self.max_action, self.max_action)
+            m = Bernoulli(torch.ones(u.shape) * 0.2)
+            noise = m.sample().to(device)
+            next_action = ((noise - self.actor_target(next_state)) != 0).double()
+
 
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_state, next_action)
@@ -103,7 +101,7 @@ class TD3(object):
                 for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
                     target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
-
+    """
     def save(self, filename, directory):
         torch.save(self.actor.state_dict(), '%s/%s_actor.pth' % (directory, filename))
         torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
@@ -112,7 +110,7 @@ class TD3(object):
     def load(self, filename, directory):
         self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, filename)))
         self.critic.load_state_dict(torch.load('%s/%s_critic.pth' % (directory, filename)))
-
+    """
     def to_train(self):
         self.actor.train()
         self.actor_target.train()

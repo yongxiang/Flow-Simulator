@@ -77,6 +77,10 @@ def select_action(policy, state):
         action = m.sample()
     else:
         p = policy(state)
-        action = p > 0.5
+        action = (p > 0.5).double()
+        m = Bernoulli(torch.ones(p.shape) * 0.2)
+        noise = m.sample().to(device)
+        action = ((noise - action) != 0).double()
+
     action = torch.clamp(action, min=0, max=1)
     return action

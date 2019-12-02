@@ -2,7 +2,7 @@
 
 ## Env Testing
 ```python
-python3 -m sample
+python3 -m sample --pg-type td3
 ```
 
 ## Env Setting
@@ -25,3 +25,16 @@ check out **flow/flow/envs** for detailed information
 ### Reward
   * large delay penalty
   * switch penalty
+
+
+### Network Indexing
+
+   01 23 45
+11
+10
+
+9
+8
+ 
+7
+6
